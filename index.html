@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perhaps Tech — Signal to Cap Table Pipeline</title>
+<meta name="description" content="From LinkedIn signal to cap table. Interactive 3D pipeline: SalesQL enrichment, CoSuite orchestration, Claude Project reasoning, with the STLC baseline — cryptographic, AI, language — grounding the onboarding floor.">
+
+<!-- Open Graph (LinkedIn, Facebook, iMessage, Slack) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="From Signal to Cap Table — Interactive Pipeline">
+<meta property="og:description" content="LinkedIn ⇄ SalesQL ⇄ CoSuite ⇄ Claude Project → Investor Cap Registration + Digital Pre/Post Inc Cap. Grounded on STLC baseline: cryptographic, AI, language.">
+<meta property="og:url" content="https://pipeline.perhapstech.com/">
+<meta property="og:site_name" content="Perhaps Tech">
+
+<!-- Twitter/X card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="From Signal to Cap Table — Interactive Pipeline">
+<meta name="twitter:description" content="Interactive 3D diagram of the signal-to-cap-table pipeline, grounded on the STLC baseline.">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;700&family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: #0a0b0f;
+    color: #e8e6df;
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  #canvas-wrap {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(199, 255, 120, 0.08), transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(255, 99, 72, 0.06), transparent 50%),
+      linear-gradient(180deg, #0a0b0f 0%, #05060a 100%);
+  }
+
+  canvas { display: block; }
+
+  .overlay {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .header {
+    top: 168px;
+    left: 32px;
+    max-width: 520px;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #c7ff78;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .title {
+    font-family: 'Fraunces', serif;
+    font-size: 38px;
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #f4f2eb;
+  }
+
+  .title em {
+    font-style: italic;
+    font-weight: 600;
+    color: #c7ff78;
+  }
+
+  .subtitle {
+    margin-top: 14px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #8a887e;
+    max-width: 440px;
+  }
+
+  .legend {
+    bottom: 28px;
+    left: 32px;
+    display: flex;
+    gap: 24px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6b6960;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .dot-ingest { background: #6ca0ff; box-shadow: 0 0 12px rgba(108,160,255,0.6); }
+  .dot-process { background: #c7ff78; box-shadow: 0 0 12px rgba(199,255,120,0.6); }
+  .dot-output-a { background: #ffb547; box-shadow: 0 0 12px rgba(255,181,71,0.6); }
+  .dot-output-b { background: #ff6348; box-shadow: 0 0 12px rgba(255,99,72,0.6); }
+  .dot-pillar { background: #9d7bff; box-shadow: 0 0 12px rgba(157,123,255,0.6); }
+  .dot-cycle { background: #4de0c4; box-shadow: 0 0 12px rgba(77,224,196,0.6); }
+
+  .controls {
+    bottom: 28px;
+    right: 32px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4a4842;
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  .controls kbd {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: #8a887e;
+    font-size: 9px;
+  }
+
+  .stage-info {
+    top: 168px;
+    right: 32px;
+    width: 280px;
+    border-left: 1px solid rgba(199,255,120,0.2);
+    padding-left: 20px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .stage-info.visible { opacity: 1; }
+
+  .stage-info .idx {
+    font-size: 10px;
+    color: #c7ff78;
+    letter-spacing: 0.2em;
+    margin-bottom: 6px;
+  }
+
+  .stage-info .name {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #f4f2eb;
+    margin-bottom: 10px;
+    line-height: 1.1;
+  }
+
+  .stage-info .desc {
+    font-size: 11px;
+    line-height: 1.6;
+    color: #8a887e;
+  }
+
+  .corner-mark {
+    position: fixed;
+    top: 28px;
+    right: 32px;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: #3a3832;
+    text-transform: uppercase;
+    z-index: 5;
+  }
+
+  .tagline {
+    position: fixed;
+    top: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 8;
+    pointer-events: none;
+    padding: 18px 36px;
+    background:
+      linear-gradient(180deg, rgba(10,11,15,0.72) 0%, rgba(10,11,15,0.35) 100%);
+    border: 1px solid rgba(199,255,120,0.18);
+    border-radius: 3px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  .tagline-line-1 {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 300;
+    font-style: italic;
+    letter-spacing: -0.01em;
+    color: #e8e6df;
+    line-height: 1.2;
+  }
+
+  .tagline-line-2 {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #f4f2eb;
+    line-height: 1.2;
+    margin-top: 4px;
+  }
+
+  .tagline-line-2 .star {
+    color: #c7ff78;
+    font-weight: 800;
+    font-style: normal;
+  }
+
+  .tagline-line-2 em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .tagline-phone {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #c7ff78;
+    margin-top: 12px;
+    pointer-events: auto;
+    text-decoration: none;
+    display: inline-block;
+    padding: 6px 14px;
+    border: 1px solid rgba(199,255,120,0.3);
+    border-radius: 2px;
+    transition: background 0.25s ease, border-color 0.25s ease;
+  }
+
+  .tagline-phone:hover {
+    background: rgba(199,255,120,0.08);
+    border-color: rgba(199,255,120,0.5);
+  }
+
+  @media (max-width: 720px) {
+    .tagline {
+      padding: 14px 20px;
+      left: 12px;
+      right: 12px;
+      transform: none;
+      width: auto;
+    }
+    .tagline-line-1 { font-size: 16px; }
+    .tagline-line-2 { font-size: 19px; }
+    .tagline-phone { font-size: 10px; letter-spacing: 0.18em; }
+  }
+</style>
+</head>
+<body>
+
+<div id="canvas-wrap"></div>
+
+<div class="tagline">
+  <div class="tagline-line-1">Whether you are Pre-Inc or Post</div>
+  <div class="tagline-line-2">Perhaps<span class="star">*</span>It's Time to <em>Grow</em></div>
+  <a class="tagline-phone" href="tel:+19544656069">Call us · 954 465 6069</a>
+</div>
+
+<div class="overlay header">
+  <div class="eyebrow">Pipeline Architecture · v1</div>
+  <div class="title">From signal<br>to <em>cap table</em>.</div>
+  <div class="subtitle">
+    LinkedIn surface ⇄ CoSuite (post/comment engagement cycle) → SalesQL enrichment → CoSuite orchestration → Claude Project reasoning → dual outputs: investor cap registration and Digital Pre/Post Inc Cap. STLC baseline — cryptographic, AI, language — grounds the onboarding floor.
+  </div>
+</div>
+
+<div class="overlay stage-info" id="stageInfo">
+  <div class="idx" id="stageIdx">STAGE 01</div>
+  <div class="name" id="stageName">LinkedIn</div>
+  <div class="desc" id="stageDesc">Professional surface. Raw contact signal.</div>
+</div>
+
+<div class="overlay legend">
+  <div class="legend-item"><span class="legend-dot dot-ingest"></span>Ingest</div>
+  <div class="legend-item"><span class="legend-dot dot-process"></span>Process</div>
+  <div class="legend-item"><span class="legend-dot dot-output-a"></span>Investor</div>
+  <div class="legend-item"><span class="legend-dot dot-output-b"></span>Startup</div>
+  <div class="legend-item"><span class="legend-dot dot-pillar"></span>STLC Baseline</div>
+  <div class="legend-item"><span class="legend-dot dot-cycle"></span>Post ⇄ Comment</div>
+</div>
+
+<div class="overlay controls">
+  <div><kbd>drag</kbd> rotate · <kbd>scroll</kbd> zoom</div>
+  <div><kbd>hover</kbd> node for detail</div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.min.js"
+  }
+}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const wrap = document.getElementById('canvas-wrap');
+  const stageInfo = document.getElementById('stageInfo');
+  const stageIdx = document.getElementById('stageIdx');
+  const stageName = document.getElementById('stageName');
+  const stageDesc = document.getElementById('stageDesc');
+
+  // ---------- Scene setup ----------
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x05060a, 18, 55);
+
+  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(14, 11, 16);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+  wrap.appendChild(renderer.domElement);
+
+  // ---------- Lights ----------
+  scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+
+  const key = new THREE.DirectionalLight(0xfff4d6, 0.9);
+  key.position.set(8, 14, 6);
+  scene.add(key);
+
+  const rim = new THREE.DirectionalLight(0xc7ff78, 0.4);
+  rim.position.set(-10, 6, -6);
+  scene.add(rim);
+
+  const accent = new THREE.PointLight(0xff6348, 0.8, 20);
+  accent.position.set(5, 3, -4);
+  scene.add(accent);
+
+  // ---------- Grid floor ----------
+  const gridGroup = new THREE.Group();
+  const gridSize = 30;
+  const gridDivs = 30;
+  const gridGeom = new THREE.BufferGeometry();
+  const gridVerts = [];
+  const step = gridSize / gridDivs;
+  for (let i = 0; i <= gridDivs; i++) {
+    const v = -gridSize / 2 + i * step;
+    gridVerts.push(-gridSize/2, -1.5, v, gridSize/2, -1.5, v);
+    gridVerts.push(v, -1.5, -gridSize/2, v, -1.5, gridSize/2);
+  }
+  gridGeom.setAttribute('position', new THREE.Float32BufferAttribute(gridVerts, 3));
+  const gridMat = new THREE.LineBasicMaterial({ color: 0x1a1d24, transparent: true, opacity: 0.6 });
+  gridGroup.add(new THREE.LineSegments(gridGeom, gridMat));
+  scene.add(gridGroup);
+
+  // Glow ring on floor
+  const ringGeom = new THREE.RingGeometry(2, 18, 64);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0xc7ff78, transparent: true, opacity: 0.035, side: THREE.DoubleSide
+  });
+  const ring = new THREE.Mesh(ringGeom, ringMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = -1.49;
+  scene.add(ring);
+
+  // ---------- Nodes ----------
+  // Layout: linear chain down the x axis, then branch in z at the Claude node
+  const stages = [
+    { id: 'linkedin',  label: 'LinkedIn',         sub: 'Signal surface',     pos: [-9, 0, 0], color: 0x6ca0ff, kind: 'ingest',
+      desc: 'Professional surface. Raw contact signal, activity, and affiliation graph — the public-facing layer before enrichment.' },
+    { id: 'salesql',   label: 'SalesQL',          sub: 'Enrichment',         pos: [-5, 0, 0], color: 0x6ca0ff, kind: 'ingest',
+      desc: '13-column contact enrichment — full_name, company, industry, LinkedIn metadata. The structured intake that feeds every downstream stage.' },
+    { id: 'cosuite',   label: 'CoSuite',          sub: 'Orchestration',      pos: [-1, 0, 0], color: 0xc7ff78, kind: 'process',
+      desc: 'Workflow orchestration layer. Routes classified contacts, batches audits, coordinates retrieval and engagement.' },
+    { id: 'claude',    label: 'Claude Project',   sub: 'Reasoning core',     pos: [ 3, 0.4, 0], color: 0xc7ff78, kind: 'process', hub: true,
+      desc: 'Canonical reasoning core. CANONICAL 14/19/37/45/46 governance — identity baseline, three-lens evaluation, evidence integrity. The branch point.' },
+    { id: 'investor',  label: 'Investor Cap Reg.', sub: 'Investor-facing',   pos: [ 9, 0, -4], color: 0xffb547, kind: 'output-a',
+      desc: 'Investor-facing cap registration artifact. Strategic briefs, diligence dossiers, and registration-ready documentation for institutional review.' },
+    { id: 'aegis',     label: 'Digital Pre/Post Inc Cap', sub: 'Startup-facing', pos: [ 9, 0,  4], color: 0xff6348, kind: 'output-b',
+      desc: 'Digital Pre/Post Incorporation Cap — the operating ledger for startup-facing equity. Governance-compliant to NIST FIPS 203/204, BSA 31 CFR 1010.430, FSB P101025, spanning pre-inc formation through post-inc issuance.' }
+  ];
+
+  const edges = [
+    ['linkedin', 'salesql'],
+    ['salesql',  'cosuite'],
+    ['cosuite',  'claude'],
+    ['claude',   'investor'],
+    ['claude',   'aegis']
+  ];
+
+  const nodeMeshes = {};
+  const nodeGroups = {};
+
+  function makeNode(stage) {
+    const group = new THREE.Group();
+    group.position.set(stage.pos[0], stage.pos[1], stage.pos[2]);
+
+    const size = stage.hub ? 1.6 : 1.25;
+    const height = stage.hub ? 1.2 : 0.9;
+
+    // Main cube — beveled feel via group of meshes
+    const geom = new THREE.BoxGeometry(size, height, size);
+    const mat = new THREE.MeshStandardMaterial({
+      color: stage.color,
+      metalness: 0.35,
+      roughness: 0.45,
+      emissive: stage.color,
+      emissiveIntensity: 0.25
+    });
+    const cube = new THREE.Mesh(geom, mat);
+    cube.castShadow = true;
+    group.add(cube);
+
+    // Wireframe overlay
+    const edges_g = new THREE.EdgesGeometry(geom);
+    const wire = new THREE.LineSegments(
+      edges_g,
+      new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 })
+    );
+    group.add(wire);
+
+    // Top disc (status light)
+    const discGeom = new THREE.CylinderGeometry(size * 0.35, size * 0.35, 0.04, 32);
+    const discMat = new THREE.MeshBasicMaterial({ color: stage.color });
+    const disc = new THREE.Mesh(discGeom, discMat);
+    disc.position.y = height / 2 + 0.03;
+    group.add(disc);
+
+    // Glow pillar extending down to grid
+    const pillarGeom = new THREE.CylinderGeometry(0.04, 0.04, 1.5 + stage.pos[1], 8);
+    const pillarMat = new THREE.MeshBasicMaterial({
+      color: stage.color, transparent: true, opacity: 0.35
+    });
+    const pillar = new THREE.Mesh(pillarGeom, pillarMat);
+    pillar.position.y = -(0.75 + stage.pos[1]/2) - height/2 + 0.3;
+    group.add(pillar);
+
+    // Base footprint
+    const footGeom = new THREE.RingGeometry(size * 0.55, size * 0.75, 32);
+    const footMat = new THREE.MeshBasicMaterial({
+      color: stage.color, transparent: true, opacity: 0.5, side: THREE.DoubleSide
+    });
+    const foot = new THREE.Mesh(footGeom, footMat);
+    foot.rotation.x = -Math.PI / 2;
+    foot.position.y = -1.48 - stage.pos[1];
+    group.add(foot);
+
+    // Label sprite
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(10, 11, 15, 0.88)';
+    roundRect(ctx, 8, 8, 496, 112, 8);
+    ctx.fill();
+    ctx.strokeStyle = `rgb(${(stage.color>>16)&255},${(stage.color>>8)&255},${stage.color&255})`;
+    ctx.lineWidth = 2;
+    roundRect(ctx, 8, 8, 496, 112, 8);
+    ctx.stroke();
+    ctx.fillStyle = '#f4f2eb';
+    ctx.font = '600 44px "Fraunces", serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(stage.label, 28, 52);
+    ctx.fillStyle = `rgb(${(stage.color>>16)&255},${(stage.color>>8)&255},${stage.color&255})`;
+    ctx.font = '500 22px "JetBrains Mono", monospace';
+    ctx.fillText(stage.sub.toUpperCase(), 28, 92);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(3.2, 0.8, 1);
+    sprite.position.y = height / 2 + 1.0;
+    group.add(sprite);
+
+    // store for interaction
+    cube.userData = { stage };
+
+    scene.add(group);
+    nodeMeshes[stage.id] = cube;
+    nodeGroups[stage.id] = { group, cube, disc, sprite, baseY: stage.pos[1] };
+    return group;
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  stages.forEach(makeNode);
+
+  // ---------- Edges (curved tubes with flowing particles) ----------
+  const flowParticles = [];
+
+  function makeEdge(fromId, toId) {
+    const from = stages.find(s => s.id === fromId);
+    const to = stages.find(s => s.id === toId);
+    const a = new THREE.Vector3(...from.pos);
+    const b = new THREE.Vector3(...to.pos);
+
+    // arc control point
+    const mid = a.clone().add(b).multiplyScalar(0.5);
+    const distance = a.distanceTo(b);
+    mid.y += Math.min(1.8, distance * 0.25);
+
+    // lateral offset for branch edges
+    if ((fromId === 'claude' && toId === 'investor') || (fromId === 'claude' && toId === 'aegis')) {
+      mid.y += 0.4;
+    }
+
+    const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+    const points = curve.getPoints(60);
+    const geom = new THREE.BufferGeometry().setFromPoints(points);
+
+    // Blend color from source to dest
+    const fromCol = new THREE.Color(from.color);
+    const toCol = new THREE.Color(to.color);
+    const midCol = fromCol.clone().lerp(toCol, 0.5);
+
+    const mat = new THREE.LineBasicMaterial({
+      color: midCol,
+      transparent: true,
+      opacity: 0.55
+    });
+    const line = new THREE.Line(geom, mat);
+    scene.add(line);
+
+    // flowing particles
+    const particleCount = Math.max(3, Math.floor(distance * 0.8));
+    for (let i = 0; i < particleCount; i++) {
+      const pGeom = new THREE.SphereGeometry(0.08, 12, 12);
+      const pMat = new THREE.MeshBasicMaterial({ color: to.color });
+      const particle = new THREE.Mesh(pGeom, pMat);
+
+      // glow halo
+      const haloGeom = new THREE.SphereGeometry(0.2, 12, 12);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: to.color, transparent: true, opacity: 0.25
+      });
+      const halo = new THREE.Mesh(haloGeom, haloMat);
+      particle.add(halo);
+
+      scene.add(particle);
+      flowParticles.push({
+        mesh: particle,
+        curve,
+        t: i / particleCount,
+        speed: 0.003 + Math.random() * 0.002
+      });
+    }
+  }
+
+  edges.forEach(e => makeEdge(e[0], e[1]));
+
+  // ---------- STLC Baseline Pillars (beneath CoSuite) ----------
+  // Three pillars of Quantum operating as the existential baseline under the
+  // onboarding activity at CoSuite: Cryptographic Security, AI Verification,
+  // Language Compliance.
+  const pillarData = [
+    { id: 'stlc_crypto', label: 'Cryptographic Security', short: 'STLC · Crypto', offset: [-1.4, 0, 0],
+      desc: 'STLC cryptographic baseline. Post-quantum discipline per NIST FIPS 203/204 — the existential floor beneath onboarding.' },
+    { id: 'stlc_ai',     label: 'AI Verification',        short: 'STLC · AI',     offset: [ 0,   0, 0],
+      desc: 'AI verification baseline. CANONICAL 14/19/37 binding discipline — every LLM call surfaced, every claim source-bound.' },
+    { id: 'stlc_lang',   label: 'Language Compliance',    short: 'STLC · Lang',   offset: [ 1.4, 0, 0],
+      desc: 'Language compliance baseline. Semantic binding per CANONICAL 14 R2 — direct / implied / inferred / extrapolated confidence bands enforced.' }
+  ];
+
+  const pillarColor = 0x9d7bff;
+  const cosuite = stages.find(s => s.id === 'cosuite');
+  const pillarMeshes = {};
+  const pillarGroups = {};
+
+  pillarData.forEach((p, i) => {
+    const group = new THREE.Group();
+    const px = cosuite.pos[0] + p.offset[0];
+    const pz = cosuite.pos[2] + 2.8; // positioned in front of (toward +z from) CoSuite
+    const py = -0.9;
+    group.position.set(px, py, pz);
+
+    // hexagonal pillar
+    const pHeight = 1.6;
+    const pGeom = new THREE.CylinderGeometry(0.35, 0.42, pHeight, 6);
+    const pMat = new THREE.MeshStandardMaterial({
+      color: pillarColor,
+      metalness: 0.55,
+      roughness: 0.3,
+      emissive: pillarColor,
+      emissiveIntensity: 0.35,
+      transparent: true,
+      opacity: 0.92
+    });
+    const pillar = new THREE.Mesh(pGeom, pMat);
+    group.add(pillar);
+
+    // wire edges
+    const wireGeom = new THREE.EdgesGeometry(pGeom);
+    const wire = new THREE.LineSegments(
+      wireGeom,
+      new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 })
+    );
+    group.add(wire);
+
+    // capstone — a small glowing octahedron on top
+    const capGeom = new THREE.OctahedronGeometry(0.22, 0);
+    const capMat = new THREE.MeshBasicMaterial({ color: pillarColor });
+    const cap = new THREE.Mesh(capGeom, capMat);
+    cap.position.y = pHeight / 2 + 0.25;
+    group.add(cap);
+
+    // base ring on floor
+    const bRingGeom = new THREE.RingGeometry(0.5, 0.65, 32);
+    const bRingMat = new THREE.MeshBasicMaterial({
+      color: pillarColor, transparent: true, opacity: 0.5, side: THREE.DoubleSide
+    });
+    const bRing = new THREE.Mesh(bRingGeom, bRingMat);
+    bRing.rotation.x = -Math.PI / 2;
+    bRing.position.y = -pHeight / 2 - 0.7 + 0.01;
+    group.add(bRing);
+
+    // pillar label sprite
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 96;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(10, 11, 15, 0.85)';
+    roundRect(ctx, 6, 6, 500, 84, 6);
+    ctx.fill();
+    ctx.strokeStyle = 'rgb(157, 123, 255)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, 6, 6, 500, 84, 6);
+    ctx.stroke();
+    ctx.fillStyle = '#f4f2eb';
+    ctx.font = '600 30px "Fraunces", serif';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.label, 22, 34);
+    ctx.fillStyle = 'rgb(157, 123, 255)';
+    ctx.font = '500 16px "JetBrains Mono", monospace';
+    ctx.fillText('STLC BASELINE · PILLAR ' + (i + 1), 22, 66);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(2.6, 0.5, 1);
+    sprite.position.y = pHeight / 2 + 0.75;
+    group.add(sprite);
+
+    // interaction payload — reuses stage-info display
+    pillar.userData = {
+      stage: {
+        id: p.id,
+        label: p.label,
+        sub: p.short,
+        kind: 'pillar',
+        color: pillarColor,
+        desc: p.desc
+      }
+    };
+
+    scene.add(group);
+    pillarMeshes[p.id] = pillar;
+    pillarGroups[p.id] = { group, cap, baseY: py, phase: i * 1.2 };
+  });
+
+  // Baseline bar connecting the three pillars (the "existential baseline")
+  const baselineStart = new THREE.Vector3(
+    cosuite.pos[0] + pillarData[0].offset[0],
+    -0.5,
+    cosuite.pos[2] + 2.8
+  );
+  const baselineEnd = new THREE.Vector3(
+    cosuite.pos[0] + pillarData[2].offset[0],
+    -0.5,
+    cosuite.pos[2] + 2.8
+  );
+  const baselineGeom = new THREE.BufferGeometry().setFromPoints([baselineStart, baselineEnd]);
+  const baselineMat = new THREE.LineBasicMaterial({
+    color: pillarColor, transparent: true, opacity: 0.6
+  });
+  scene.add(new THREE.Line(baselineGeom, baselineMat));
+
+  // Vertical feeder lines from each pillar capstone up into CoSuite
+  pillarData.forEach((p) => {
+    const from = new THREE.Vector3(
+      cosuite.pos[0] + p.offset[0],
+      -0.9 + 1.6/2 + 0.25,  // capstone position
+      cosuite.pos[2] + 2.8
+    );
+    const to = new THREE.Vector3(cosuite.pos[0], cosuite.pos[1] - 0.3, cosuite.pos[2]);
+    const mid = from.clone().add(to).multiplyScalar(0.5);
+    mid.y += 0.3;
+    const feederCurve = new THREE.QuadraticBezierCurve3(from, mid, to);
+    const fPoints = feederCurve.getPoints(30);
+    const fGeom = new THREE.BufferGeometry().setFromPoints(fPoints);
+    const fMat = new THREE.LineBasicMaterial({
+      color: pillarColor, transparent: true, opacity: 0.35
+    });
+    scene.add(new THREE.Line(fGeom, fMat));
+
+    // slow upward-flowing particles showing baseline feeding into CoSuite
+    for (let i = 0; i < 2; i++) {
+      const pGeom = new THREE.SphereGeometry(0.055, 10, 10);
+      const pMat = new THREE.MeshBasicMaterial({ color: pillarColor });
+      const particle = new THREE.Mesh(pGeom, pMat);
+      const halo = new THREE.Mesh(
+        new THREE.SphereGeometry(0.14, 10, 10),
+        new THREE.MeshBasicMaterial({ color: pillarColor, transparent: true, opacity: 0.25 })
+      );
+      particle.add(halo);
+      scene.add(particle);
+      flowParticles.push({
+        mesh: particle,
+        curve: feederCurve,
+        t: i / 2,
+        speed: 0.0025 + Math.random() * 0.0015
+      });
+    }
+  });
+
+  // ---------- Post / Comment Cycle (bidirectional CoSuite ⇄ LinkedIn) ----------
+  // Two parallel offset curves — top = Post (LinkedIn → CoSuite),
+  // bottom = Comment (CoSuite → LinkedIn). Distinct teal color.
+  const cycleColor = 0x4de0c4;
+  const linkedin = stages.find(s => s.id === 'linkedin');
+
+  function makeCycleEdge(fromStage, toStage, labelText, yOffset, arcBoost) {
+    const a = new THREE.Vector3(fromStage.pos[0], fromStage.pos[1] + yOffset, fromStage.pos[2]);
+    const b = new THREE.Vector3(toStage.pos[0],   toStage.pos[1]   + yOffset, toStage.pos[2]);
+    const mid = a.clone().add(b).multiplyScalar(0.5);
+    mid.y += arcBoost;
+    // pull the arcs out of the z=0 plane so they don't overlap the primary edge
+    mid.z += arcBoost > 0 ? 1.4 : -1.4;
+
+    const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+    const points = curve.getPoints(50);
+    const geom = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({
+      color: cycleColor, transparent: true, opacity: 0.65
+    });
+    const line = new THREE.Line(geom, mat);
+    line.userData.dashed = true;
+    scene.add(line);
+
+    // label sprite at arc apex
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'rgba(10, 11, 15, 0.9)';
+    roundRect(ctx, 4, 4, 248, 56, 4);
+    ctx.fill();
+    ctx.strokeStyle = 'rgb(77, 224, 196)';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, 4, 4, 248, 56, 4);
+    ctx.stroke();
+    ctx.fillStyle = '#4de0c4';
+    ctx.font = '500 22px "JetBrains Mono", monospace';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.fillText(labelText, 128, 32);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+    const sprite = new THREE.Sprite(spriteMat);
+    sprite.scale.set(1.6, 0.4, 1);
+    const apex = curve.getPoint(0.5);
+    sprite.position.copy(apex);
+    scene.add(sprite);
+
+    // flowing particles — direction from 'from' to 'to'
+    const particleCount = 4;
+    for (let i = 0; i < particleCount; i++) {
+      const pGeom = new THREE.SphereGeometry(0.09, 12, 12);
+      const pMat = new THREE.MeshBasicMaterial({ color: cycleColor });
+      const particle = new THREE.Mesh(pGeom, pMat);
+      const halo = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 12, 12),
+        new THREE.MeshBasicMaterial({ color: cycleColor, transparent: true, opacity: 0.3 })
+      );
+      particle.add(halo);
+      scene.add(particle);
+      flowParticles.push({
+        mesh: particle,
+        curve,
+        t: i / particleCount,
+        speed: 0.0035 + Math.random() * 0.002
+      });
+    }
+  }
+
+  // LinkedIn → CoSuite (Post inbound) — arced above
+  makeCycleEdge(linkedin, cosuite, 'POST →', 0.35, 1.6);
+  // CoSuite → LinkedIn (Comment outbound) — arced below/behind
+  makeCycleEdge(cosuite, linkedin, '← COMMENT', -0.35, -1.6);
+
+  // ---------- Ambient drift particles ----------
+  const ambientGeom = new THREE.BufferGeometry();
+  const ambientCount = 200;
+  const ambientPos = new Float32Array(ambientCount * 3);
+  for (let i = 0; i < ambientCount; i++) {
+    ambientPos[i * 3]     = (Math.random() - 0.5) * 40;
+    ambientPos[i * 3 + 1] = Math.random() * 8 - 1;
+    ambientPos[i * 3 + 2] = (Math.random() - 0.5) * 25;
+  }
+  ambientGeom.setAttribute('position', new THREE.Float32BufferAttribute(ambientPos, 3));
+  const ambientMat = new THREE.PointsMaterial({
+    color: 0xc7ff78, size: 0.04, transparent: true, opacity: 0.35, sizeAttenuation: true
+  });
+  const ambientPoints = new THREE.Points(ambientGeom, ambientMat);
+  scene.add(ambientPoints);
+
+  // ---------- Interaction ----------
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  let hoveredId = null;
+
+  let isDragging = false;
+  let prev = { x: 0, y: 0 };
+  let theta = Math.atan2(camera.position.x, camera.position.z);
+  let phi = Math.acos(camera.position.y / camera.position.length());
+  let radius = camera.position.length();
+
+  function updateCamera() {
+    camera.position.x = radius * Math.sin(phi) * Math.sin(theta);
+    camera.position.y = radius * Math.cos(phi);
+    camera.position.z = radius * Math.sin(phi) * Math.cos(theta);
+    camera.lookAt(0, 0.5, 0);
+  }
+
+  renderer.domElement.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    prev.x = e.clientX; prev.y = e.clientY;
+  });
+  window.addEventListener('mouseup', () => { isDragging = false; });
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      const dx = e.clientX - prev.x;
+      const dy = e.clientY - prev.y;
+      theta -= dx * 0.005;
+      phi = Math.max(0.2, Math.min(Math.PI / 2.1, phi - dy * 0.005));
+      prev.x = e.clientX; prev.y = e.clientY;
+      updateCamera();
+    }
+    // hover detection
+    pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  });
+
+  renderer.domElement.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    radius = Math.max(10, Math.min(48, radius + e.deltaY * 0.015));
+    updateCamera();
+  }, { passive: false });
+
+  // Touch support
+  renderer.domElement.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      isDragging = true;
+      prev.x = e.touches[0].clientX; prev.y = e.touches[0].clientY;
+    }
+  });
+  renderer.domElement.addEventListener('touchend', () => { isDragging = false; });
+  renderer.domElement.addEventListener('touchmove', (e) => {
+    if (isDragging && e.touches.length === 1) {
+      const dx = e.touches[0].clientX - prev.x;
+      const dy = e.touches[0].clientY - prev.y;
+      theta -= dx * 0.005;
+      phi = Math.max(0.2, Math.min(Math.PI / 2.1, phi - dy * 0.005));
+      prev.x = e.touches[0].clientX; prev.y = e.touches[0].clientY;
+      updateCamera();
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // ---------- Stage info panel update ----------
+  function setStageInfo(stage) {
+    if (stage.kind === 'pillar') {
+      stageIdx.textContent = `BASELINE · ${stage.sub.toUpperCase()}`;
+    } else {
+      const idx = stages.findIndex(s => s.id === stage.id) + 1;
+      stageIdx.textContent = `STAGE ${String(idx).padStart(2, '0')} · ${stage.kind.toUpperCase()}`;
+    }
+    stageName.textContent = stage.label;
+    stageDesc.textContent = stage.desc;
+    stageInfo.classList.add('visible');
+  }
+
+  // default on load
+  setTimeout(() => setStageInfo(stages[3]), 400);
+
+  // ---------- Animation loop ----------
+  const clock = new THREE.Clock();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+
+    // Flow particles
+    flowParticles.forEach(p => {
+      p.t += p.speed;
+      if (p.t > 1) p.t = 0;
+      const pt = p.curve.getPoint(p.t);
+      p.mesh.position.copy(pt);
+    });
+
+    // Node bob
+    Object.entries(nodeGroups).forEach(([id, n], i) => {
+      n.group.position.y = n.baseY + Math.sin(t * 0.8 + i * 0.7) * 0.08;
+      n.disc.material.opacity = 0.7 + Math.sin(t * 2 + i) * 0.3;
+    });
+
+    // Pillar capstone rotation + subtle vertical drift
+    Object.values(pillarGroups).forEach((pg) => {
+      pg.cap.rotation.y = t * 0.6 + pg.phase;
+      pg.cap.rotation.x = t * 0.3 + pg.phase;
+      pg.group.position.y = pg.baseY + Math.sin(t * 0.5 + pg.phase) * 0.04;
+    });
+
+    // Ambient drift
+    ambientPoints.rotation.y = t * 0.02;
+
+    // Ring pulse
+    ringMat.opacity = 0.03 + Math.sin(t * 1.2) * 0.015;
+
+    // Hover detection
+    raycaster.setFromCamera(pointer, camera);
+    const hoverTargets = [...Object.values(nodeMeshes), ...Object.values(pillarMeshes)];
+    const hits = raycaster.intersectObjects(hoverTargets);
+    if (hits.length > 0) {
+      const stage = hits[0].object.userData.stage;
+      if (hoveredId !== stage.id) {
+        hoveredId = stage.id;
+        setStageInfo(stage);
+        renderer.domElement.style.cursor = 'pointer';
+      }
+    } else {
+      renderer.domElement.style.cursor = isDragging ? 'grabbing' : 'grab';
+    }
+
+    // Slow auto-rotate when not dragging
+    if (!isDragging && hoveredId === null) {
+      theta += 0.0008;
+      updateCamera();
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+})();
+</script>
+
+</body>
+</html>
