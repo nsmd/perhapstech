@@ -3,20 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Perhaps Tech — Signal to Cap Table Pipeline</title>
-<meta name="description" content="From LinkedIn signal to cap table. Interactive 3D pipeline: SalesQL enrichment, CoSuite orchestration, Claude Project reasoning, with the STLC baseline — cryptographic, AI, language — grounding the onboarding floor.">
+<title>Perhaps* Pipeline Visualization</title>
+<meta name="description" content="Interactive 3D view of the Perhaps* pipeline — the flow that carries founders, CEOs, and investors to conversations, cap plan, and opportunity.">
 
 <!-- Open Graph (LinkedIn, Facebook, iMessage, Slack) -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="From Signal to Cap Table — Interactive Pipeline">
-<meta property="og:description" content="LinkedIn ⇄ SalesQL ⇄ CoSuite ⇄ Claude Project → Investor Cap Registration + Digital Pre/Post Inc Cap. Grounded on STLC baseline: cryptographic, AI, language.">
-<meta property="og:url" content="https://pipeline.perhapstech.com/">
-<meta property="og:site_name" content="Perhaps Tech">
+<meta property="og:title" content="Perhaps* Pipeline Visualization">
+<meta property="og:description" content="The flow that carries founders, CEOs, and investors to conversations, cap plan, and opportunity. Whether you are Pre-Inc or Post — Perhaps*It's Time to Grow.">
+<meta property="og:site_name" content="Perhaps* Tech">
 
 <!-- Twitter/X card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="From Signal to Cap Table — Interactive Pipeline">
-<meta name="twitter:description" content="Interactive 3D diagram of the signal-to-cap-table pipeline, grounded on the STLC baseline.">
+<meta name="twitter:title" content="Perhaps* Pipeline Visualization">
+<meta name="twitter:description" content="The flow that carries founders, CEOs, and investors to conversations, cap plan, and opportunity.">
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;700&family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,800&display=swap');
@@ -24,15 +23,25 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html, body {
-    height: 100%;
+    min-height: 100%;
     background: #0a0b0f;
     color: #e8e6df;
     font-family: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .hero {
+    position: relative;
+    width: 100%;
+    height: 100vh;
     overflow: hidden;
   }
 
   #canvas-wrap {
-    position: fixed;
+    position: absolute;
     inset: 0;
     background:
       radial-gradient(ellipse at 20% 20%, rgba(199, 255, 120, 0.08), transparent 50%),
@@ -43,7 +52,7 @@
   canvas { display: block; }
 
   .overlay {
-    position: fixed;
+    position: absolute;
     pointer-events: none;
     z-index: 10;
   }
@@ -172,7 +181,7 @@
   }
 
   .corner-mark {
-    position: fixed;
+    position: absolute;
     top: 28px;
     right: 32px;
     font-size: 9px;
@@ -183,7 +192,7 @@
   }
 
   .tagline {
-    position: fixed;
+    position: absolute;
     top: 32px;
     left: 50%;
     transform: translateX(-50%);
@@ -264,9 +273,251 @@
     .tagline-line-2 { font-size: 19px; }
     .tagline-phone { font-size: 10px; letter-spacing: 0.18em; }
   }
+
+  /* ========== SCROLL CUE ========== */
+  .scroll-cue {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 9;
+    pointer-events: none;
+    animation: scrollPulse 2.4s ease-in-out infinite;
+  }
+
+  .scroll-cue-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #c7ff78;
+    margin-bottom: 10px;
+    opacity: 0.75;
+  }
+
+  .scroll-cue-arrow {
+    width: 1px;
+    height: 28px;
+    background: linear-gradient(180deg, rgba(199,255,120,0.8), transparent);
+    margin: 0 auto;
+  }
+
+  .scroll-cue-dot {
+    width: 5px;
+    height: 5px;
+    background: #c7ff78;
+    border-radius: 50%;
+    margin: 4px auto 0;
+    box-shadow: 0 0 8px rgba(199,255,120,0.8);
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 1; }
+    50% { transform: translateX(-50%) translateY(8px); opacity: 0.55; }
+  }
+
+  /* ========== SCENARIO SECTION ========== */
+  .scenario {
+    position: relative;
+    width: 100%;
+    background:
+      radial-gradient(ellipse at 70% 10%, rgba(157, 123, 255, 0.06), transparent 55%),
+      radial-gradient(ellipse at 20% 90%, rgba(199, 255, 120, 0.04), transparent 50%),
+      linear-gradient(180deg, #05060a 0%, #0a0b0f 40%, #0a0b0f 100%);
+    padding: 120px 32px 80px;
+    color: #e8e6df;
+  }
+
+  .scenario-inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .scenario-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: #c7ff78;
+    margin-bottom: 16px;
+  }
+
+  .scenario-title {
+    font-family: 'Fraunces', serif;
+    font-size: 52px;
+    font-weight: 300;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #f4f2eb;
+    margin-bottom: 48px;
+  }
+
+  .scenario-title em {
+    font-style: italic;
+    font-weight: 600;
+    color: #c7ff78;
+  }
+
+  .scenario-body {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    line-height: 1.7;
+    font-weight: 300;
+    color: #d4d1c7;
+  }
+
+  .scenario-body p {
+    margin-bottom: 28px;
+  }
+
+  .scenario-body p.lead {
+    font-size: 24px;
+    font-weight: 400;
+    color: #f4f2eb;
+    line-height: 1.5;
+  }
+
+  .scenario-body p.short {
+    font-size: 22px;
+    font-style: italic;
+    color: #e8e6df;
+  }
+
+  .scenario-body .accent {
+    color: #c7ff78;
+    font-weight: 500;
+  }
+
+  .scenario-body .quiet {
+    color: #8a887e;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  .scenario-body em {
+    font-style: italic;
+  }
+
+  .scenario-divider {
+    width: 40px;
+    height: 1px;
+    background: rgba(199, 255, 120, 0.3);
+    margin: 40px 0;
+  }
+
+  /* Closing CTA block */
+  .scenario-cta {
+    margin-top: 80px;
+    padding: 48px 40px;
+    border: 1px solid rgba(199, 255, 120, 0.25);
+    border-radius: 3px;
+    background:
+      linear-gradient(180deg, rgba(10, 11, 15, 0.6) 0%, rgba(199, 255, 120, 0.04) 100%);
+    text-align: center;
+  }
+
+  .scenario-cta-line-1 {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 300;
+    font-style: italic;
+    color: #d4d1c7;
+    margin-bottom: 6px;
+  }
+
+  .scenario-cta-line-2 {
+    font-family: 'Fraunces', serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: #f4f2eb;
+    margin-bottom: 28px;
+    letter-spacing: -0.01em;
+  }
+
+  .scenario-cta-line-2 .star {
+    color: #c7ff78;
+    font-weight: 800;
+  }
+
+  .scenario-cta-line-2 em {
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .scenario-cta-phone {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: #c7ff78;
+    text-decoration: none;
+    padding: 12px 28px;
+    border: 1px solid rgba(199, 255, 120, 0.4);
+    border-radius: 2px;
+    transition: all 0.25s ease;
+  }
+
+  .scenario-cta-phone:hover {
+    background: rgba(199, 255, 120, 0.08);
+    border-color: rgba(199, 255, 120, 0.7);
+    transform: translateY(-1px);
+  }
+
+  /* Footer */
+  .scenario-footer {
+    max-width: 720px;
+    margin: 80px auto 0;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #4a4842;
+  }
+
+  .scenario-footer .mark {
+    color: #6b6960;
+  }
+
+  .scenario-footer .mark .star {
+    color: #c7ff78;
+  }
+
+  /* Reveal on scroll */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 720px) {
+    .scenario { padding: 80px 20px 60px; }
+    .scenario-title { font-size: 36px; }
+    .scenario-body { font-size: 17px; }
+    .scenario-body p.lead { font-size: 19px; }
+    .scenario-body p.short { font-size: 18px; }
+    .scenario-body .quiet { font-size: 13px; }
+    .scenario-cta { padding: 32px 20px; margin-top: 56px; }
+    .scenario-cta-line-2 { font-size: 24px; }
+    .scenario-footer { flex-direction: column; gap: 12px; text-align: center; }
+  }
 </style>
 </head>
 <body>
+
+<section class="hero">
 
 <div id="canvas-wrap"></div>
 
@@ -278,10 +529,6 @@
 
 <div class="overlay header">
   <div class="eyebrow">Pipeline Architecture · v1</div>
-  <div class="title">From signal<br>to <em>cap table</em>.</div>
-  <div class="subtitle">
-    LinkedIn surface ⇄ CoSuite (post/comment engagement cycle) → SalesQL enrichment → CoSuite orchestration → Claude Project reasoning → dual outputs: investor cap registration and Digital Pre/Post Inc Cap. STLC baseline — cryptographic, AI, language — grounds the onboarding floor.
-  </div>
 </div>
 
 <div class="overlay stage-info" id="stageInfo">
@@ -303,6 +550,83 @@
   <div><kbd>drag</kbd> rotate · <kbd>scroll</kbd> zoom</div>
   <div><kbd>hover</kbd> node for detail</div>
 </div>
+
+<div class="scroll-cue">
+  <div class="scroll-cue-label">The Scenario · Scroll</div>
+  <div class="scroll-cue-arrow"></div>
+  <div class="scroll-cue-dot"></div>
+</div>
+
+</section>
+
+<!-- ========== SCENARIO SECTION ========== -->
+<section class="scenario" id="scenario">
+  <div class="scenario-inner">
+
+    <div class="scenario-eyebrow reveal">The Scenario · Founder's Walkthrough</div>
+    <h2 class="scenario-title reveal">The story<br>begins with <em>you</em>.</h2>
+
+    <div class="scenario-body">
+
+      <p class="lead reveal">
+        You're active on LinkedIn. Your new venture has an innovation. You have history. And you're ready for funding.
+      </p>
+
+      <p class="short reveal">
+        You're excited, enthusiastic, and posting.
+      </p>
+
+      <p class="reveal">
+        Your LinkedIn story, business history, URLs, along with your posts — post lands inside the <span class="accent">Perhaps<span style="color:#c7ff78;font-weight:600">*</span> CoSuite</span>. The story begins.
+      </p>
+
+      <div class="scenario-divider reveal"></div>
+
+      <p class="reveal">
+        The signal is enriched. Structured intake of who you are and who's around you. CoSuite holds the onboarding — grounded on three pillars you didn't build but you need: <span class="accent">cryptographic security</span>, <span class="accent">AI verification</span>, <span class="accent">language compliance</span>. The existential baseline. The floor beneath the floor.
+      </p>
+
+      <p class="reveal">
+        The reasoning core takes it from there. Your identity, your public record, your evidence. Nothing invented. Nothing assumed. Every claim bound to a source.
+      </p>
+
+      <p class="short reveal">
+        Then the pipeline splits.
+      </p>
+
+      <p class="reveal">
+        One path goes to investors. Cap registration, diligence-ready, the documentation that makes a funder say <em>yes</em> instead of <em>send me more</em>.
+      </p>
+
+      <p class="reveal">
+        The other path is yours. <span class="accent">Digital Pre/Post Inc Cap</span>. The ledger you run your company on — pre-incorporation to post — built to the standards regulators are writing right now: <span class="quiet">NIST FIPS 203/204, BSA 31 CFR 1010.430, FSB P101025</span>.
+      </p>
+
+      <div class="scenario-divider reveal"></div>
+
+      <p class="reveal">
+        A comment goes back to LinkedIn. The loop closes. You keep posting.
+      </p>
+
+      <p class="short reveal" style="color:#f4f2eb;">
+        And somewhere in the middle of all that — the cap table you needed is already built.
+      </p>
+
+    </div>
+
+    <div class="scenario-cta reveal">
+      <div class="scenario-cta-line-1">Whether you are Pre-Inc or Post</div>
+      <div class="scenario-cta-line-2">Perhaps<span class="star">*</span>It's Time to <em>Grow</em></div>
+      <a class="scenario-cta-phone" href="tel:+19544656069">Call us · 954 465 6069</a>
+    </div>
+
+    <div class="scenario-footer">
+      <div class="mark">Perhaps<span class="star">*</span> Tech · Pipeline Visualization</div>
+      <div>Workflow Architectural 3D · v1</div>
+    </div>
+
+  </div>
+</section>
 
 <script type="importmap">
 {
@@ -382,12 +706,12 @@
   const stages = [
     { id: 'linkedin',  label: 'LinkedIn',         sub: 'Signal surface',     pos: [-9, 0, 0], color: 0x6ca0ff, kind: 'ingest',
       desc: 'Professional surface. Raw contact signal, activity, and affiliation graph — the public-facing layer before enrichment.' },
-    { id: 'salesql',   label: 'SalesQL',          sub: 'Enrichment',         pos: [-5, 0, 0], color: 0x6ca0ff, kind: 'ingest',
-      desc: '13-column contact enrichment — full_name, company, industry, LinkedIn metadata. The structured intake that feeds every downstream stage.' },
+    { id: 'salesql',   label: 'Enrichment',       sub: 'Signal intake',      pos: [-5, 0, 0], color: 0x6ca0ff, kind: 'ingest',
+      desc: 'Structured contact intake — identity, company, industry, affiliation graph. The bound profile that feeds every downstream stage.' },
     { id: 'cosuite',   label: 'CoSuite',          sub: 'Orchestration',      pos: [-1, 0, 0], color: 0xc7ff78, kind: 'process',
-      desc: 'Workflow orchestration layer. Routes classified contacts, batches audits, coordinates retrieval and engagement.' },
-    { id: 'claude',    label: 'Claude Project',   sub: 'Reasoning core',     pos: [ 3, 0.4, 0], color: 0xc7ff78, kind: 'process', hub: true,
-      desc: 'Canonical reasoning core. CANONICAL 14/19/37/45/46 governance — identity baseline, three-lens evaluation, evidence integrity. The branch point.' },
+      desc: 'Workflow orchestration layer. Routes the onboarding, coordinates retrieval, closes the engagement loop.' },
+    { id: 'claude',    label: 'Reasoning Core',   sub: 'Evidence engine',    pos: [ 3, 0.4, 0], color: 0xc7ff78, kind: 'process', hub: true,
+      desc: 'Identity baseline, three-lens evaluation, evidence integrity. Nothing invented, nothing assumed — every claim bound to a source. The branch point.' },
     { id: 'investor',  label: 'Investor Cap Reg.', sub: 'Investor-facing',   pos: [ 9, 0, -4], color: 0xffb547, kind: 'output-a',
       desc: 'Investor-facing cap registration artifact. Strategic briefs, diligence dossiers, and registration-ready documentation for institutional review.' },
     { id: 'aegis',     label: 'Digital Pre/Post Inc Cap', sub: 'Startup-facing', pos: [ 9, 0,  4], color: 0xff6348, kind: 'output-b',
@@ -578,9 +902,9 @@
     { id: 'stlc_crypto', label: 'Cryptographic Security', short: 'STLC · Crypto', offset: [-1.4, 0, 0],
       desc: 'STLC cryptographic baseline. Post-quantum discipline per NIST FIPS 203/204 — the existential floor beneath onboarding.' },
     { id: 'stlc_ai',     label: 'AI Verification',        short: 'STLC · AI',     offset: [ 0,   0, 0],
-      desc: 'AI verification baseline. CANONICAL 14/19/37 binding discipline — every LLM call surfaced, every claim source-bound.' },
+      desc: 'AI verification baseline. Binding discipline on every model call — outputs surfaced, claims source-bound, nothing invented.' },
     { id: 'stlc_lang',   label: 'Language Compliance',    short: 'STLC · Lang',   offset: [ 1.4, 0, 0],
-      desc: 'Language compliance baseline. Semantic binding per CANONICAL 14 R2 — direct / implied / inferred / extrapolated confidence bands enforced.' }
+      desc: 'Language compliance baseline. Semantic binding — direct, implied, inferred, and extrapolated claims held to separate confidence thresholds.' }
   ];
 
   const pillarColor = 0x9d7bff;
@@ -970,6 +1294,41 @@
   }
 
   animate();
+})();
+
+// ========== SCROLL REVEAL ==========
+(function() {
+  const reveals = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) {
+    reveals.forEach(el => el.classList.add('in'));
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        // stagger by index of sibling
+        const parent = entry.target.parentElement;
+        const siblings = Array.from(parent.querySelectorAll('.reveal'));
+        const idx = siblings.indexOf(entry.target);
+        setTimeout(() => entry.target.classList.add('in'), Math.max(0, idx) * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+  reveals.forEach(el => observer.observe(el));
+})();
+
+// Smooth scroll when user clicks the scroll cue
+(function() {
+  const cue = document.querySelector('.scroll-cue');
+  const scenario = document.getElementById('scenario');
+  if (!cue || !scenario) return;
+  // make cue clickable
+  cue.style.pointerEvents = 'auto';
+  cue.style.cursor = 'pointer';
+  cue.addEventListener('click', () => {
+    scenario.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 })();
 </script>
 
