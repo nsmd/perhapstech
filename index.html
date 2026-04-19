@@ -272,6 +272,23 @@
     .tagline-line-1 { font-size: 16px; }
     .tagline-line-2 { font-size: 19px; }
     .tagline-phone { font-size: 10px; letter-spacing: 0.18em; }
+
+    /* Hide desktop-only overlays on phones — no hover, no drag hints needed,
+       and the stage-info panel would otherwise overlap the 3D scene labels. */
+    .overlay.header { display: none; }
+    .overlay.stage-info { display: none; }
+    .overlay.controls { display: none; }
+    .overlay.legend {
+      bottom: 16px;
+      left: 12px;
+      right: 12px;
+      font-size: 8px;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .scroll-cue { bottom: 90px; }
+    .scroll-cue-label { font-size: 8px; }
   }
 
   /* ========== SCROLL CUE ========== */
@@ -646,12 +663,31 @@
   const stageDesc = document.getElementById('stageDesc');
 
   // ---------- Scene setup ----------
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x05060a, 18, 55);
+  // ---------- Mobile detection ----------
+  // Below this width we lay the pipeline out top-to-bottom instead of left-to-right,
+  // adjust camera, and compact labels so the scene reads on a phone.
+  const IS_MOBILE = window.innerWidth < 720;
 
-  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 200);
-  camera.position.set(14, 11, 16);
-  camera.lookAt(0, 0, 0);
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x05060a, IS_MOBILE ? 22 : 18, IS_MOBILE ? 60 : 55);
+
+  const camera = new THREE.PerspectiveCamera(
+    IS_MOBILE ? 50 : 42,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    200
+  );
+  if (IS_MOBILE) {
+    // Mobile layout runs along z: LinkedIn at z=-8 (far), outputs at z=+6.8 (near).
+    // Camera positioned in front of the near end, slightly elevated, looking back
+    // toward LinkedIn. This makes LinkedIn appear at TOP of the phone screen
+    // (far end of the view, naturally higher), and outputs at BOTTOM (near end).
+    camera.position.set(0, 6, 15);
+    camera.lookAt(0, 0, -2);
+  } else {
+    camera.position.set(14, 11, 16);
+    camera.lookAt(0, 0, 0);
+  }
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -702,8 +738,22 @@
   scene.add(ring);
 
   // ---------- Nodes ----------
-  // Layout: linear chain down the x axis, then branch in z at the Claude node
-  const stages = [
+  // Desktop: linear chain down the x axis, then branch in z at the Reasoning Core node
+  // Mobile: top-to-bottom chain down the z axis, branch in x at the Reasoning Core node
+  const stages = IS_MOBILE ? [
+    { id: 'linkedin',  label: 'LinkedIn',         sub: 'Signal surface',     pos: [ 0, 0,  -8], color: 0x6ca0ff, kind: 'ingest',
+      desc: 'Professional surface. Raw contact signal, activity, and affiliation graph — the public-facing layer before enrichment.' },
+    { id: 'salesql',   label: 'Enrichment',       sub: 'Signal intake',      pos: [ 0, 0,  -4.5], color: 0x6ca0ff, kind: 'ingest',
+      desc: 'Structured contact intake — identity, company, industry, affiliation graph. The bound profile that feeds every downstream stage.' },
+    { id: 'cosuite',   label: 'CoSuite',          sub: 'Orchestration',      pos: [ 0, 0,  -1], color: 0xc7ff78, kind: 'process',
+      desc: 'Workflow orchestration layer. Routes the onboarding, coordinates retrieval, closes the engagement loop.' },
+    { id: 'claude',    label: 'Reasoning Core',   sub: 'Evidence engine',    pos: [ 0, 0.4, 2.8], color: 0xc7ff78, kind: 'process', hub: true,
+      desc: 'Identity baseline, three-lens evaluation, evidence integrity. Nothing invented, nothing assumed — every claim bound to a source. The branch point.' },
+    { id: 'investor',  label: 'Investor Cap Reg.', sub: 'Investor-facing',   pos: [-3.5, 0,  6.8], color: 0xffb547, kind: 'output-a',
+      desc: 'Investor-facing cap registration artifact. Strategic briefs, diligence dossiers, and registration-ready documentation for institutional review.' },
+    { id: 'aegis',     label: 'Digital Pre/Post Inc Cap', sub: 'Startup-facing', pos: [ 3.5, 0, 6.8], color: 0xff6348, kind: 'output-b',
+      desc: 'Digital Pre/Post Incorporation Cap — the operating ledger for startup-facing equity. Governance-compliant to NIST FIPS 203/204, BSA 31 CFR 1010.430, FSB P101025, spanning pre-inc formation through post-inc issuance.' }
+  ] : [
     { id: 'linkedin',  label: 'LinkedIn',         sub: 'Signal surface',     pos: [-9, 0, 0], color: 0x6ca0ff, kind: 'ingest',
       desc: 'Professional surface. Raw contact signal, activity, and affiliation graph — the public-facing layer before enrichment.' },
     { id: 'salesql',   label: 'Enrichment',       sub: 'Signal intake',      pos: [-5, 0, 0], color: 0x6ca0ff, kind: 'ingest',
@@ -806,7 +856,7 @@
     tex.needsUpdate = true;
     const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
     const sprite = new THREE.Sprite(spriteMat);
-    sprite.scale.set(3.2, 0.8, 1);
+    sprite.scale.set(IS_MOBILE ? 3.8 : 3.2, IS_MOBILE ? 0.95 : 0.8, 1);
     sprite.position.y = height / 2 + 1.0;
     group.add(sprite);
 
@@ -914,8 +964,16 @@
 
   pillarData.forEach((p, i) => {
     const group = new THREE.Group();
-    const px = cosuite.pos[0] + p.offset[0];
-    const pz = cosuite.pos[2] + 2.8; // positioned in front of (toward +z from) CoSuite
+    let px, pz;
+    if (IS_MOBILE) {
+      // Pillars tucked off to the left side, at CoSuite's z, stacked on z so they
+      // don't collide with the vertical pipeline. offset[0] becomes z-offset.
+      px = cosuite.pos[0] - 3.6;
+      pz = cosuite.pos[2] + p.offset[0] * 0.9; // reuse the -1.4 / 0 / +1.4 spread but along z
+    } else {
+      px = cosuite.pos[0] + p.offset[0];
+      pz = cosuite.pos[2] + 2.8;
+    }
     const py = -0.9;
     group.position.set(px, py, pz);
 
@@ -982,7 +1040,7 @@
     tex.needsUpdate = true;
     const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
     const sprite = new THREE.Sprite(spriteMat);
-    sprite.scale.set(2.6, 0.5, 1);
+    sprite.scale.set(IS_MOBILE ? 3.2 : 2.6, IS_MOBILE ? 0.62 : 0.5, 1);
     sprite.position.y = pHeight / 2 + 0.75;
     group.add(sprite);
 
@@ -1003,17 +1061,26 @@
     pillarGroups[p.id] = { group, cap, baseY: py, phase: i * 1.2 };
   });
 
+  // helper — returns world position of pillar i given layout mode
+  function pillarPos(i) {
+    const p = pillarData[i];
+    if (IS_MOBILE) {
+      return {
+        x: cosuite.pos[0] - 3.6,
+        z: cosuite.pos[2] + p.offset[0] * 0.9
+      };
+    }
+    return {
+      x: cosuite.pos[0] + p.offset[0],
+      z: cosuite.pos[2] + 2.8
+    };
+  }
+
   // Baseline bar connecting the three pillars (the "existential baseline")
-  const baselineStart = new THREE.Vector3(
-    cosuite.pos[0] + pillarData[0].offset[0],
-    -0.5,
-    cosuite.pos[2] + 2.8
-  );
-  const baselineEnd = new THREE.Vector3(
-    cosuite.pos[0] + pillarData[2].offset[0],
-    -0.5,
-    cosuite.pos[2] + 2.8
-  );
+  const _p0 = pillarPos(0);
+  const _p2 = pillarPos(2);
+  const baselineStart = new THREE.Vector3(_p0.x, -0.5, _p0.z);
+  const baselineEnd   = new THREE.Vector3(_p2.x, -0.5, _p2.z);
   const baselineGeom = new THREE.BufferGeometry().setFromPoints([baselineStart, baselineEnd]);
   const baselineMat = new THREE.LineBasicMaterial({
     color: pillarColor, transparent: true, opacity: 0.6
@@ -1021,11 +1088,12 @@
   scene.add(new THREE.Line(baselineGeom, baselineMat));
 
   // Vertical feeder lines from each pillar capstone up into CoSuite
-  pillarData.forEach((p) => {
+  pillarData.forEach((p, idx) => {
+    const pos = pillarPos(idx);
     const from = new THREE.Vector3(
-      cosuite.pos[0] + p.offset[0],
+      pos.x,
       -0.9 + 1.6/2 + 0.25,  // capstone position
-      cosuite.pos[2] + 2.8
+      pos.z
     );
     const to = new THREE.Vector3(cosuite.pos[0], cosuite.pos[1] - 0.3, cosuite.pos[2]);
     const mid = from.clone().add(to).multiplyScalar(0.5);
@@ -1069,8 +1137,14 @@
     const b = new THREE.Vector3(toStage.pos[0],   toStage.pos[1]   + yOffset, toStage.pos[2]);
     const mid = a.clone().add(b).multiplyScalar(0.5);
     mid.y += arcBoost;
-    // pull the arcs out of the z=0 plane so they don't overlap the primary edge
-    mid.z += arcBoost > 0 ? 1.4 : -1.4;
+    // pull the arcs sideways from the primary edge axis so they don't overlap.
+    // desktop: primary edges run along x, so arc in z.
+    // mobile: primary edges run along z, so arc in x.
+    if (IS_MOBILE) {
+      mid.x += arcBoost > 0 ? 1.8 : -1.8;
+    } else {
+      mid.z += arcBoost > 0 ? 1.4 : -1.4;
+    }
 
     const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
     const points = curve.getPoints(50);
@@ -1103,7 +1177,7 @@
     tex.needsUpdate = true;
     const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
     const sprite = new THREE.Sprite(spriteMat);
-    sprite.scale.set(1.6, 0.4, 1);
+    sprite.scale.set(IS_MOBILE ? 2.2 : 1.6, IS_MOBILE ? 0.55 : 0.4, 1);
     const apex = curve.getPoint(0.5);
     sprite.position.copy(apex);
     scene.add(sprite);
@@ -1157,15 +1231,24 @@
 
   let isDragging = false;
   let prev = { x: 0, y: 0 };
-  let theta = Math.atan2(camera.position.x, camera.position.z);
-  let phi = Math.acos(camera.position.y / camera.position.length());
-  let radius = camera.position.length();
+  // Scene center varies by layout — desktop pipeline is centered around origin,
+  // mobile pipeline runs along z from -8 to +6.8 with center around z=1
+  const CENTER_TARGET = IS_MOBILE
+    ? new THREE.Vector3(0, 0, 1)
+    : new THREE.Vector3(0, 0.5, 0);
+
+  // Orbit around that center. Compute initial spherical coords from the
+  // camera-to-target vector so drag behavior matches the initial view.
+  const _camOffset = camera.position.clone().sub(CENTER_TARGET);
+  let theta = Math.atan2(_camOffset.x, _camOffset.z);
+  let phi = Math.acos(_camOffset.y / _camOffset.length());
+  let radius = _camOffset.length();
 
   function updateCamera() {
-    camera.position.x = radius * Math.sin(phi) * Math.sin(theta);
-    camera.position.y = radius * Math.cos(phi);
-    camera.position.z = radius * Math.sin(phi) * Math.cos(theta);
-    camera.lookAt(0, 0.5, 0);
+    camera.position.x = CENTER_TARGET.x + radius * Math.sin(phi) * Math.sin(theta);
+    camera.position.y = CENTER_TARGET.y + radius * Math.cos(phi);
+    camera.position.z = CENTER_TARGET.z + radius * Math.sin(phi) * Math.cos(theta);
+    camera.lookAt(CENTER_TARGET);
   }
 
   renderer.domElement.addEventListener('mousedown', (e) => {
